@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SSW 카메라 검증</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --line:#272c36; --fg:#e7eaf0;
+    --dim:#98a0b0; --ok:#3ddc84; --ng:#ff5c5c; --acc:#4c8dff; --warn:#ffb020;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    padding:16px 14px calc(40px + env(safe-area-inset-bottom));}
+  h1{font-size:19px;margin:0 0 4px}
+  h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 18px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px;margin-bottom:14px}
+  .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .tag.a{background:rgba(61,220,132,.15);color:var(--ok)}
+  .tag.b{background:rgba(255,92,92,.15);color:var(--ng)}
+  button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:13px 16px;
+    background:var(--acc);color:#fff;width:100%;margin-top:8px;-webkit-appearance:none}
+  button.sec{background:#262b36;color:var(--fg)}
+  button:disabled{opacity:.4}
+  .row{display:flex;gap:8px}.row>*{flex:1}
+  video,canvas.prev{width:100%;border-radius:10px;background:#000;display:block;
+    -webkit-touch-callout:none;user-select:none;-webkit-user-select:none;pointer-events:none}
+  video{aspect-ratio:3/4;object-fit:cover}
+  .strip{display:flex;gap:6px;overflow-x:auto;margin-top:10px}
+  .strip canvas{width:64px;height:64px;border-radius:7px;flex:0 0 auto;background:#000;
+    -webkit-touch-callout:none;user-select:none;-webkit-user-select:none;pointer-events:none}
+  dl{margin:10px 0 0;font-size:13px}
+  dl div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;
+    border-top:1px solid var(--line)}
+  dt{color:var(--dim);flex:0 0 auto}
+  dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;word-break:break-all}
+  .ok{color:var(--ok)}.ng{color:var(--ng)}.warn{color:var(--warn)}
+  .check{background:#1d2129;border:1px solid var(--line);border-radius:10px;
+    padding:12px;margin-top:12px}
+  .check p{margin:0 0 10px;font-size:13.5px}
+  input[type=file]{display:none}
+  textarea{width:100%;height:190px;background:#0b0d11;color:var(--fg);
+    border:1px solid var(--line);border-radius:10px;padding:11px;
+    font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
+  .note{font-size:12.5px;color:var(--dim);margin-top:10px}
+  .banner{background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.35);
+    color:var(--warn);border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<h1>SSW 카메라 검증 스파이크</h1>
+<p class="sub">촬영 방식 2가지를 비교합니다. 각 촬영 후 <b>사진앱(갤러리)을 직접 열어</b> 확인하세요.</p>
+
+<div class="banner" id="secWarn" hidden>
+  ⚠ HTTPS가 아닙니다. 카메라 API는 보안 컨텍스트에서만 동작합니다.
+</div>
+
+<section>
+  <h2>0. 환경 진단</h2>
+  <dl id="diag"></dl>
+</section>
+
+<section>
+  <h2><span class="tag a">방식 A</span> getUserMedia — 권장안</h2>
+  <p class="note" style="margin:0 0 10px">브라우저 내부에서 프리뷰 → canvas 캡처.
+    OS 카메라 앱을 호출하지 않으므로 파일시스템을 거치지 않습니다.</p>
+  <video id="v" playsinline muted autoplay></video>
+  <div class="row">
+    <button id="start">카메라 켜기</button>
+    <button id="flip" class="sec" disabled>전/후면</button>
+  </div>
+  <button id="shot" disabled>● 촬영</button>
+  <div class="strip" id="stripA"></div>
+  <dl id="resA"></dl>
+  <div class="check" id="checkA" hidden>
+    <p>📱 지금 <b>사진앱 / 갤러리</b>를 열어 방금 찍은 사진이 있는지 확인하세요.</p>
+    <div class="row">
+      <button class="sec" data-ans="A|없음">없음 ✓</button>
+      <button class="sec" data-ans="A|있음">있음 ✗</button>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="tag b">방식 B</span> input capture — 대조군</h2>
+  <p class="note" style="margin:0 0 10px">OS 기본 카메라 앱을 호출합니다.
+    기종에 따라 촬영본이 DCIM에 먼저 저장될 수 있습니다.</p>
+  <input type="file" id="fileIn" accept="image/*" capture="environment">
+  <button id="pick" class="sec">OS 카메라로 촬영</button>
+  <div class="strip" id="stripB"></div>
+  <dl id="resB"></dl>
+  <div class="check" id="checkB" hidden>
+    <p>📱 다시 <b>사진앱 / 갤러리</b>를 열어 확인하세요.</p>
+    <div class="row">
+      <button class="sec" data-ans="B|없음">없음 ✓</button>
+      <button class="sec" data-ans="B|있음">있음 ✗</button>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>3. E2E 암호화 자가진단</h2>
+  <p class="note" style="margin:0 0 10px">사무실 공개키로 암호화 → 사무실 개인키로 복호화까지
+    이 기기에서 실제로 돌려봅니다. 브라우저 기본 API만 사용합니다.</p>
+  <button id="crypto" class="sec">300KB 사진으로 왕복 시험</button>
+  <dl id="resC"></dl>
+</section>
+
+<section>
+  <h2>결과 리포트</h2>
+  <textarea id="report" readonly></textarea>
+  <button id="copy" class="sec">전체 복사</button>
+  <p class="note">복사해서 그대로 전달해 주시면 기종별 판정에 반영합니다.</p>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const MAX_EDGE = 1600, QUALITY = 0.8;
+const state = { diag:{}, A:[], B:[], gallery:{} };
+
+/* ---------- 진단 ---------- */
+function diag(){
+  const nav = navigator, s = window.isSecureContext;
+  const standalone = window.matchMedia('(display-mode: standalone)').matches
+    || nav.standalone === true;
+  state.diag = {
+    'User-Agent': nav.userAgent,
+    '보안 컨텍스트(HTTPS)': s,
+    'getUserMedia 지원': !!(nav.mediaDevices && nav.mediaDevices.getUserMedia),
+    'crypto.subtle': !!(window.crypto && crypto.subtle),
+    '홈화면 실행(standalone)': standalone,
+    '화면': innerWidth + '×' + innerHeight + ' @' + devicePixelRatio + 'x',
+    '기기 메모리(GB)': nav.deviceMemory || '미제공'
+  };
+  if(!s) $('#secWarn').hidden = false;
+  render('#diag', state.diag);
+}
+function render(sel, obj){
+  $(sel).innerHTML = Object.entries(obj).map(([k,v]) => {
+    let cls = '', txt = v;
+    if(v === true){ cls='ok'; txt='예'; }
+    if(v === false){ cls='ng'; txt='아니오'; }
+    return `<div><dt>${k}</dt><dd class="${cls}">${txt}</dd></div>`;
+  }).join('');
+  report();
+}
+
+/* ---------- 유틸 ---------- */
+async function sha256(buf){
+  if(!crypto.subtle) return '(불가)';
+  const h = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16)+'…';
+}
+// JPEG APP1 'Exif' 마커 탐지
+function hasExif(buf){
+  const d = new DataView(buf);
+  if(d.byteLength < 4 || d.getUint16(0) !== 0xFFD8) return null;
+  let o = 2;
+  while(o + 4 < d.byteLength){
+    if(d.getUint8(o) !== 0xFF) break;
+    const m = d.getUint8(o+1);
+    if(m === 0xDA) break;                     // SOS = 이미지 데이터 시작
+    const len = d.getUint16(o+2);
+    if(m === 0xE1){
+      const s = String.fromCharCode(d.getUint8(o+4),d.getUint8(o+5),
+                                    d.getUint8(o+6),d.getUint8(o+7));
+      if(s === 'Exif') return true;
+    }
+    o += 2 + len;
+  }
+  return false;
+}
+const kb = n => (n/1024).toFixed(0) + ' KB';
+
+function thumb(stripSel, src, w, h){
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const s = Math.min(w, h), sx = (w-s)/2, sy = (h-s)/2;
+  c.getContext('2d').drawImage(src, sx, sy, s, s, 0, 0, 128, 128);
+  $(stripSel).appendChild(c);
+}
+
+/* ---------- 방식 A ---------- */
+let stream = null, facing = 'environment';
+async function startCam(){
+  stopCam();
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:{ ideal:facing }, width:{ ideal:1920 }, height:{ ideal:1440 } },
+      audio:false
+    });
+  }catch(e){
+    alert('카메라 실패: ' + e.name + ' — ' + e.message);
+    state.diag['카메라 오류'] = e.name; render('#diag', state.diag);
+    return;
+  }
+  const v = $('#v');
+  v.srcObject = stream;
+  await v.play().catch(()=>{});
+  const t = stream.getVideoTracks()[0].getSettings();
+  state.diag['트랙 해상도'] = t.width + '×' + t.height;
+  state.diag['facingMode'] = t.facingMode || facing;
+  render('#diag', state.diag);
+  $('#shot').disabled = false; $('#flip').disabled = false;
+  $('#start').textContent = '카메라 다시 켜기';
+}
+function stopCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; } }
+
+async function shoot(){
+  const t0 = performance.now();
+  const v = $('#v'), vw = v.videoWidth, vh = v.videoHeight;
+  if(!vw){ alert('프리뷰 준비 중입니다.'); return; }
+  const sc = Math.min(1, MAX_EDGE / Math.max(vw, vh));
+  const w = Math.round(vw*sc), h = Math.round(vh*sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(v, 0, 0, w, h);
+
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', QUALITY));
+  const buf = await blob.arrayBuffer();
+  const ms = Math.round(performance.now() - t0);
+
+  thumb('#stripA', c, w, h);
+  c.width = c.height = 0;                       // 메모리 즉시 해제
+
+  state.A.push({ w, h, bytes: blob.size, exif: hasExif(buf), ms,
+                 hash: await sha256(buf) });
+  const last = state.A[state.A.length-1];
+  render('#resA', {
+    '촬영 매수': state.A.length,
+    '해상도': last.w + '×' + last.h,
+    '용량': kb(last.bytes),
+    'EXIF 포함': last.exif === true,
+    '누적 용량': kb(state.A.reduce((s,x)=>s+x.bytes,0)),
+    '캡처 소요': last.ms + ' ms',
+    'SHA-256': last.hash
+  });
+  $('#checkA').hidden = false;
+}
+
+/* ---------- 방식 B ---------- */
+async function onFile(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const buf = await f.arrayBuffer();
+  const bmp = await createImageBitmap(f).catch(()=>null);
+  if(bmp){ thumb('#stripB', bmp, bmp.width, bmp.height); }
+  state.B.push({ name:f.name, bytes:f.size, exif:hasExif(buf),
+                 w:bmp?bmp.width:0, h:bmp?bmp.height:0 });
+  const last = state.B[state.B.length-1];
+  render('#resB', {
+    '촬영 매수': state.B.length,
+    '파일명': last.name,
+    '해상도': last.w ? last.w + '×' + last.h : '읽기 실패',
+    '용량': kb(last.bytes),
+    'EXIF 포함': last.exif === true
+  });
+  if(bmp) bmp.close();
+  $('#checkB').hidden = false;
+  e.target.value = '';
+}
+
+/* ---------- E2E 암호화 왕복 시험 ---------- */
+async function cryptoTest(){
+  const C = crypto.subtle, t = () => performance.now();
+  const btn = $('#crypto'); btn.disabled = true; btn.textContent = '시험 중…';
+  try{
+    const rand = n => { const a = new Uint8Array(n);
+      for(let o=0;o<n;o+=65536) crypto.getRandomValues(a.subarray(o, Math.min(o+65536,n)));
+      return a; };
+    const derive = async (priv, pubRaw, usage) => {
+      const pub = await C.importKey('raw', pubRaw, {name:'ECDH',namedCurve:'P-256'}, false, []);
+      const s = await C.deriveBits({name:'ECDH', public:pub}, priv, 256);
+      const hk = await C.importKey('raw', s, 'HKDF', false, ['deriveKey']);
+      return C.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(32),
+        info:new TextEncoder().encode('ssw-msg/2')}, hk, {name:'AES-GCM',length:256}, false, [usage]);
+    };
+    // [사무실] 키쌍 — 실제로는 최초 1회만, 공개키는 QR로 배포
+    const office = await C.generateKey({name:'ECDH',namedCurve:'P-256'}, true, ['deriveBits']);
+    const officePub = await C.exportKey('raw', office.publicKey);
+    const photo = rand(300*1024);
+
+    // [폰] 암호화
+    const t0 = t();
+    const eph = await C.generateKey({name:'ECDH',namedCurve:'P-256'}, true, ['deriveBits']);
+    const k1 = await derive(eph.privateKey, officePub, 'encrypt');
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const aad = new TextEncoder().encode('01J5K7P2Q4');
+    const ct = await C.encrypt({name:'AES-GCM', iv, additionalData:aad}, k1, photo);
+    const epk = await C.exportKey('raw', eph.publicKey);
+    const encMs = Math.round(t() - t0);
+
+    // [사무실] 복호화
+    const t1 = t();
+    const k2 = await derive(office.privateKey, epk, 'decrypt');
+    const plain = new Uint8Array(await C.decrypt({name:'AES-GCM', iv, additionalData:aad}, k2, ct));
+    const decMs = Math.round(t() - t1);
+
+    const bad = new Uint8Array(ct); bad[100] ^= 1;
+    const tamper = await C.decrypt({name:'AES-GCM',iv,additionalData:aad}, k2, bad)
+                     .then(()=>false).catch(()=>true);
+    const badAad = new TextEncoder().encode('01J5K7P2Q5');
+    const forge = await C.decrypt({name:'AES-GCM',iv,additionalData:badAad}, k2, ct)
+                    .then(()=>false).catch(()=>true);
+
+    state.crypto = {
+      '암호화 소요(300KB)': encMs + ' ms',
+      '복호화 소요': decMs + ' ms',
+      '전송량 증가': ((ct.byteLength - photo.length) + epk.byteLength + iv.length) + ' B',
+      '왕복 일치': plain.length===photo.length && plain.every((v,i)=>v===photo[i]),
+      '변조 시 거부': tamper,
+      'id 위조 시 거부': forge,
+      '공개키 QR 길이': btoa(String.fromCharCode(...new Uint8Array(officePub))).length + '자'
+    };
+    render('#resC', state.crypto);
+    btn.textContent = '다시 시험';
+  }catch(e){
+    state.crypto = { '실패': e.name + ' — ' + e.message };
+    render('#resC', state.crypto);
+    btn.textContent = '다시 시험';
+  }
+  btn.disabled = false;
+}
+
+/* ---------- 리포트 ---------- */
+function report(){
+  const L = [];
+  L.push('=== SSW 카메라 검증 리포트 ===');
+  L.push('일시: ' + new Date().toString());
+  L.push('');
+  L.push('[환경]');
+  for(const [k,v] of Object.entries(state.diag)) L.push('  ' + k + ': ' + v);
+  L.push('');
+  L.push('[방식 A · getUserMedia]  ' + state.A.length + '장');
+  state.A.forEach((x,i)=>L.push(`  #${i+1} ${x.w}×${x.h} ${kb(x.bytes)} EXIF=${x.exif} ${x.ms}ms`));
+  L.push('  갤러리 확인: ' + (state.gallery.A || '미확인'));
+  L.push('');
+  L.push('[방식 B · input capture]  ' + state.B.length + '장');
+  state.B.forEach((x,i)=>L.push(`  #${i+1} ${x.w}×${x.h} ${kb(x.bytes)} EXIF=${x.exif} ${x.name}`));
+  L.push('  갤러리 확인: ' + (state.gallery.B || '미확인'));
+  L.push('');
+  L.push('[E2E 암호화 자가진단]');
+  if(state.crypto){ for(const [k,v] of Object.entries(state.crypto)) L.push('  ' + k + ': ' + v); }
+  else L.push('  미실행');
+  L.push('');
+  const a = state.gallery.A, b = state.gallery.B;
+  if(a || b){
+    L.push('[판정]');
+    if(a === '없음') L.push('  ✓ A안 유효 — getUserMedia는 기기에 파일을 남기지 않음');
+    if(a === '있음') L.push('  ✗ A안 실패 — 설계 재검토 필요 (중대)');
+    if(b === '있음') L.push('  ✓ 예상대로 input capture는 갤러리에 저장됨 → 사용 금지 확정');
+    if(b === '없음') L.push('  – 이 기종은 input capture도 저장 안 함 (기종 의존, 여전히 사용 금지)');
+  }
+  $('#report').value = L.join('\n');
+}
+
+/* ---------- 배선 ---------- */
+$('#start').onclick = startCam;
+$('#flip').onclick = () => { facing = facing === 'environment' ? 'user' : 'environment'; startCam(); };
+$('#shot').onclick = shoot;
+$('#pick').onclick = () => $('#fileIn').click();
+$('#crypto').onclick = cryptoTest;
+$('#fileIn').onchange = onFile;
+document.querySelectorAll('[data-ans]').forEach(b => b.onclick = () => {
+  const [k, v] = b.dataset.ans.split('|');
+  state.gallery[k] = v;
+  b.parentElement.parentElement.innerHTML =
+    `<p>기록됨: <b class="${v==='없음'?'ok':'ng'}">${v}</b></p>`;
+  report();
+});
+$('#copy').onclick = async () => {
+  try{ await navigator.clipboard.writeText($('#report').value); $('#copy').textContent = '복사됨 ✓'; }
+  catch{ $('#report').removeAttribute('readonly'); $('#report').select(); }
+};
+addEventListener('pagehide', stopCam);
+diag();
+</script>
+</body>
+</html>

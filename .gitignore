@@ -1,0 +1,13 @@
+# 절대 커밋 금지 — 사무실 개인키 · 기기 비밀값
+server/keys/
+
+# 수신 데이터 (암호문·평문 모두 개인정보)
+server/inbox/
+
+# 로그
+server/*.log
+
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
