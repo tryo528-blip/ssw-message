@@ -5,8 +5,9 @@ ERP와 직접 연결하지 않고, 정해진 공간에 정해진 양식으로 �
 
 | | |
 |---|---|
-| 상태 | 설계 확정 · 서버 프로토타입 완료 · **카메라 실기 검증 대기** |
-| 비용 | 0원 (서버 임대·스토어 등록비 없음) |
+| 상태 | 규격 v3 확정 · 서버 프로토타입(v2) 동작 · **카메라 실기 검증 대기** |
+| 서버 | 리눅스 미니PC (Ubuntu Server + LUKS) |
+| 비용 | 서버 임대·스토어 등록비 0원 (미니PC 구매만 일회성) |
 | 지원 | iPhone · Android (PWA, 홈화면 추가) |
 
 ---
@@ -63,11 +64,18 @@ ECDH(P-256) + HKDF-SHA256 + AES-256-GCM — 전부 브라우저 기본 API입니
 | 문서 | 내용 | 이런 때 |
 |---|---|---|
 | [DESIGN.md](DESIGN.md) | 설계 전체 · 판단 근거 · 진행 상황 | **여기부터 읽으세요** |
-| [docs/SETUP.md](docs/SETUP.md) | 사무실 설치 7단계 | 서버를 세울 때 |
-| [docs/CONTRACT.md](docs/CONTRACT.md) | 연동 규격 (봉투 스키마·폴더 구조) | ERP 붙일 때 |
+| [docs/SETUP.md](docs/SETUP.md) | 미니PC 설치 9단계 (Ubuntu) | 서버를 세울 때 |
+| [docs/CONTRACT.md](docs/CONTRACT.md) | 연동 규격 v3 (봉투·API·오류코드·폴더) | ERP 붙일 때 |
+| [docs/PIPELINE.md](docs/PIPELINE.md) | 검증/보정 2단계 처리, 문서 스캔 보정 | 사진 처리를 만들 때 |
 | [docs/TRANSPORT.md](docs/TRANSPORT.md) | 전송 경로를 왜 이렇게 골랐나 | 경로를 다시 검토할 때 |
 | [server/README.md](server/README.md) | 서버 프로토타입 사용법 | 서버를 만질 때 |
 | [spike/camera/README.md](spike/camera/README.md) | 카메라 실기 검증 절차 | 폰에서 검증할 때 |
+
+### 선행 프로젝트
+
+[WorkCadenceTransfer](https://github.com/tryo528-blip/WorkCadenceTransfer) — 사내망 전용
+네이티브 안드로이드 버전. 사진 정규화 정책과 오류 코드 체계를 이 프로젝트가 흡수했습니다.
+그쪽은 사설 IP HTTPS 전용이라 **현장에서 전송이 불가능**했고, 그 제약을 푼 것이 이 프로젝트입니다.
 
 ---
 
