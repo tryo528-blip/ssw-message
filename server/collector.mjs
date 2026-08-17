@@ -18,6 +18,7 @@
  */
 import { mkdir, readFile, writeFile, readdir, rename, stat } from 'node:fs/promises';
 import { existsSync, watch } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { open as openEnvelope, unpackWire, sha256hex, contentDigest } from './lib/envelope.mjs';
@@ -193,7 +194,20 @@ async function processOne(day, name, path) {
   });
 
   await moveTo(DONE, day, name, path);
+  if (kind === 'photo') kickScan(join(outDir, recordId + '.json'));
   return { kind, count: files.length, bytes: outFiles.reduce((s, f) => s + f.bytes, 0), recordId };
+}
+
+function kickScan(jsonPath) {
+  const py = process.platform === 'win32' ? 'python' : 'python3';
+  try {
+    const c = spawn(py, [join(HERE, 'scan.py'), jsonPath], {
+      detached: true, stdio: 'ignore', windowsHide: true
+    });
+    c.unref();
+  } catch (e) {
+    log('보정 spawn 실패 ' + e.message);
+  }
 }
 
 /* ---- 실패 처리 ---- */

@@ -5,12 +5,14 @@
  *   node keygen.mjs office            사무실 키쌍 생성 (최초 1회)
  *   node keygen.mjs device 김현장      직원 기기 등록 (기기마다 1회)
  *   node keygen.mjs list              등록된 기기 목록
+ *   node keygen.mjs provision 김현장   기존 기기 JSON 재출력 (PWA 붙여넣기용)
  *
  * 사무실 개인키는 keys/office-private.jwk.json 에 저장됩니다.
  * 이 파일을 잃으면 미수집 데이터는 영구 복구 불가입니다. 반드시 백업하세요.
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -78,7 +80,42 @@ async function genDevice(name) {
   console.log('\n아래 JSON을 QR로 만들어 해당 직원 폰에서 스캔하게 하세요.');
   console.log('(QR 생성기는 오프라인 도구를 쓰세요. 비밀값이 들어 있으므로 온라인 생성기 금지)\n');
   console.log(JSON.stringify(provision));
+  writeQr(JSON.stringify(provision), name);
   console.log('\n분실 시: keys/devices.json 에서 "revoked": true 로 바꾸면 즉시 차단됩니다.\n');
+}
+
+function writeQr(text, name) {
+  const svg = join(KEYS, name + '.svg');
+  const script = join(HERE, '../app/scripts/provision-qr.mjs');
+  if (!existsSync(script)) return;
+  const r = spawnSync(process.execPath, [script, text, svg], { encoding: 'utf8' });
+  if (r.status === 0) console.log('오프라인 QR: ' + svg + '  (온라인 생성기 쓰지 말 것)');
+  else if (r.stderr) console.error(r.stderr);
+}
+
+async function printProvision(name) {
+  if (!name) { console.error('사용법: node keygen.mjs provision <이름>'); process.exit(1); }
+  if (!existsSync(DEVICES) || !existsSync(OFFICE_PUB)) {
+    console.error('\n키가 없습니다. office / device 를 먼저 실행하세요.\n');
+    process.exit(1);
+  }
+  const devices = await readJson(DEVICES);
+  const office = await readJson(OFFICE_PUB);
+  const found = Object.entries(devices).find(([, d]) => d.name === name && !d.revoked);
+  if (!found) { console.error('\n등록된 기기가 없습니다: ' + name + '\n'); process.exit(1); }
+  const [deviceId, dev] = found;
+  const provision = {
+    v: 1,
+    url: process.env.SSW_URL || '',
+    device_id: deviceId,
+    secret: dev.secret,
+    key_id: office.key_id,
+    pub: office.pub,
+    user: name
+  };
+  const text = JSON.stringify(provision);
+  console.log(text);
+  writeQr(text, name);
 }
 
 async function list() {
@@ -95,10 +132,12 @@ async function list() {
 const [cmd, arg] = process.argv.slice(2);
 if (cmd === 'office') await genOffice();
 else if (cmd === 'device') await genDevice(arg);
+else if (cmd === 'provision') await printProvision(arg);
 else if (cmd === 'list') await list();
 else {
   console.log('\n사용법:');
-  console.log('  node keygen.mjs office          사무실 키쌍 생성 (최초 1회)');
-  console.log('  node keygen.mjs device <이름>    직원 기기 등록');
-  console.log('  node keygen.mjs list            등록 기기 목록\n');
+  console.log('  node keygen.mjs office              사무실 키쌍 생성 (최초 1회)');
+  console.log('  node keygen.mjs device <이름>        직원 기기 등록');
+  console.log('  node keygen.mjs provision <이름>     기존 기기 JSON 다시 출력');
+  console.log('  node keygen.mjs list                등록 기기 목록\n');
 }

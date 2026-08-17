@@ -150,12 +150,26 @@ Caddy를 앞에 두면 Let's Encrypt 인증서를 자동으로 발급·갱신합
 
 ---
 
+## 2단계 · 문서 보정
+
+수집기가 1단계를 끝낸 뒤 `scan.py` 를 띄웁니다. OpenCV가 없으면 `skipped` 로 남기고 정규화본은 유지합니다.
+
+```
+python scan.py --all
+```
+
+## 운영
+
+```
+node ops.mjs disk
+```
+
+```
+node ops.mjs gc --days 14
+```
+
 ## 아직 안 한 것
 
-- **2단계 문서 보정** — Python + OpenCV. `scan_status` 가 `pending` 으로 남습니다
-- **EXIF 방향의 픽셀 적용** — 메타데이터는 1단계에서 제거되지만 방향 적용은
-  디코딩이 필요해 2단계 몫입니다. `orientation_pending` 에 값을 남겨둡니다
 - ERP DB 투입 — 현재는 `inbox/ready/` 에 파일만 떨굽니다
-- `_processed` / `_error` 보존기간 자동 삭제
 - 수신 실패 알림(메일/텔레그램)
 - 멱등성 캐시가 메모리 + 파일 존재 확인 — 대용량에서는 인덱스 필요 (현 규모에선 불필요)

@@ -59,6 +59,10 @@
 <div class="banner" id="secWarn" hidden>
   ⚠ HTTPS가 아닙니다. 카메라 API는 보안 컨텍스트에서만 동작합니다.
 </div>
+<div class="banner" id="iosHint" hidden>
+  아이폰은 인증서를 신뢰해야 카메라가 열립니다.
+  <a href="ios.html" style="color:inherit;font-weight:700">설치 안내</a>
+</div>
 
 <section>
   <h2>0. 환경 진단</h2>
@@ -78,7 +82,7 @@
   <div class="strip" id="stripA"></div>
   <dl id="resA"></dl>
   <div class="check" id="checkA" hidden>
-    <p>📱 지금 <b>사진앱 / 갤러리</b>를 열어 방금 찍은 사진이 있는지 확인하세요.</p>
+    <p>📱 지금 <b>사진 앱</b>과 <b>최근 삭제된 항목</b>을 열어 방금 찍은 사진이 있는지 확인하세요.</p>
     <div class="row">
       <button class="sec" data-ans="A|없음">없음 ✓</button>
       <button class="sec" data-ans="A|있음">있음 ✗</button>
@@ -95,7 +99,7 @@
   <div class="strip" id="stripB"></div>
   <dl id="resB"></dl>
   <div class="check" id="checkB" hidden>
-    <p>📱 다시 <b>사진앱 / 갤러리</b>를 열어 확인하세요.</p>
+    <p>📱 다시 <b>사진 앱</b>과 <b>최근 삭제된 항목</b>을 열어 확인하세요.</p>
     <div class="row">
       <button class="sec" data-ans="B|없음">없음 ✓</button>
       <button class="sec" data-ans="B|있음">있음 ✗</button>
@@ -138,6 +142,7 @@ function diag(){
     '기기 메모리(GB)': nav.deviceMemory || '미제공'
   };
   if(!s) $('#secWarn').hidden = false;
+  if(/iPhone|iPad|iPod/.test(nav.userAgent)) $('#iosHint').hidden = false;
   render('#diag', state.diag);
 }
 function render(sel, obj){
@@ -212,6 +217,7 @@ async function startCam(){
 function stopCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; } }
 
 async function shoot(){
+  if(state.A.length >= 5){ alert('메모리 보호 — 최대 5장입니다.'); return; }
   const t0 = performance.now();
   const v = $('#v'), vw = v.videoWidth, vh = v.videoHeight;
   if(!vw){ alert('프리뷰 준비 중입니다.'); return; }
@@ -240,6 +246,7 @@ async function shoot(){
     'SHA-256': last.hash
   });
   $('#checkA').hidden = false;
+  if(state.A.length >= 5) $('#shot').disabled = true;
 }
 
 /* ---------- 방식 B ---------- */
@@ -377,6 +384,7 @@ $('#copy').onclick = async () => {
   catch{ $('#report').removeAttribute('readonly'); $('#report').select(); }
 };
 addEventListener('pagehide', stopCam);
+addEventListener('visibilitychange', () => { if(document.hidden) stopCam(); });
 diag();
 </script>
 </body>

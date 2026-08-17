@@ -11,3 +11,7 @@ node_modules/
 dist/
 .DS_Store
 Thumbs.db
+
+# P0-c 로컬 HTTPS 인증서 · 임시 QR
+spike/camera/.certs/
+spike/camera/open-on-phone.png

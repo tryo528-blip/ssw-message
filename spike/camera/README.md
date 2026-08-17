@@ -26,8 +26,30 @@ python -m http.server 8080 --directory spike/camera
 
 ### 방법 2 — 안드로이드 전용, 설치 없음
 
+USB + **adb 연결**이 있어야 합니다. inspect에 폰만 보이고 `adb devices` 가 비어 있으면
+포트 포워딩은 동작하지 않습니다. 갤럭시 크롬 주소창은 `localhost` 를 검색으로 보내므로
+메모에 `http://127.0.0.1:8080` 을 붙여넣고 링크를 탭하세요.
+
 USB 연결 → PC 크롬에서 `chrome://inspect` → Port forwarding → `8080 → localhost:8080`.
-폰 크롬에서 `http://localhost:8080` 접속. localhost는 보안 컨텍스트로 취급됩니다.
+
+### 방법 3 — ADB 없이 LAN HTTPS (자체 서명)
+
+```bash
+node spike/camera/serve.mjs --port 8443
+```
+
+인증서는 `spike/camera/.certs/` (커밋 금지). 폰에서는 주소창 대신 메모/QR로
+`https://<PC의 LAN IP>:8443` 을 엽니다. 경고 → **고급 → (안전하지 않음)으로 이동**.
+HTTP LAN 주소는 보안 컨텍스트가 아니라 카메라가 열리지 않습니다.
+
+### 방법 4 — 아이폰 Safari (로컬 CA 신뢰)
+
+아이폰은 경고만 통과하면 카메라가 안 열립니다. CA를 설치해야 합니다.
+
+1. Safari로 `http://<PC LAN IP>:8081/ios.html` (프로필 배포는 HTTP)
+2. 구성 프로파일 설치 → **설정 → 일반 → 정보 → 인증서 신뢰 설정**에서 전체 신뢰
+3. `https://<PC LAN IP>:8443/` 에서 갤럭시와 같은 절차
+4. 크롬 iOS는 쓰지 않습니다. PWA 기준은 Safari입니다.
 
 ---
 

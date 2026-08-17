@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | 최종 갱신 | 2026-08-17 |
-| 현재 단계 | **P2 완료** → 다음은 P0-c(갤럭시 검증) 또는 P3(PWA) |
+| 현재 단계 | P3·P4·P5·운영도구 구현 · 아이폰 실기·미니PC·ERP 만 남음 |
 | 저장소 | https://github.com/tryo528-blip/ssw-message (private) |
 
 ---
@@ -39,41 +39,75 @@ SSWCENTER ERP가 결과 폴더를 읽어갑니다. ERP와 직접 연결하지 �
 | 암호화 성능 | 300KB **1ms** | 실측 |
 | 전송 오버헤드 | **+0.2%** (600KB → 601KB) | v3 바이너리 전송 |
 | JPEG 메타데이터 제거 | 25/25 통과 | `test-jpeg.mjs` |
-| getUserMedia + canvas 캡처 | 동작 | PC 크롬 |
-| canvas 재인코딩 시 EXIF 제거 | `EXIF=false` | PC 크롬 |
+| getUserMedia + canvas 캡처 | 동작 | PC 크롬 · 갤럭시 삼성인터넷 |
+| canvas 재인코딩 시 EXIF 제거 | `EXIF=false` | PC 크롬 · 갤럭시 실기 228KB |
+| 갤럭시 갤러리 미저장 (방식 A) | 없음 | 실기 2026-08-17 삼성인터넷 30 |
+| 폰 E2E 암호화 | 12ms, +93B, 왕복·변조·위조 통과 | 같은 리포트 |
 | 서버 전 경로 검사 34종 | 34/34 통과 | `test-client.mjs` (v3) |
 | 암호문에서 평문 검색 | 0건 | 수신 서버가 실제로 못 읽음을 확인 |
 
 ---
 
-## 3. 🔴 아직 안 끝난 최대 리스크 — P0-c
+## 3. P0-c 갤럭시 — 통과 (2026-08-17 23:06 KST)
 
-**안드로이드 갤럭시 실기에서 "촬영해도 갤러리에 안 남는다"가 아직 미확인입니다.**
+설계 전제(방식 A는 갤러리에 안 남음)가 **갤럭시 실기에서 확인**됐습니다.
 
-2026-08-17 시도했으나 **PC 크롬에서 돌아가서 무효**였습니다
-(리포트의 User-Agent가 `Windows NT 10.0`). 데스크톱엔 갤러리가 없으니 당연히 안 남습니다.
-갤럭시에서는 HTTP 접속이라 `getUserMedia 지원: 아니오` 로 카메라가 열리지 않았습니다.
+| | |
+|---|---|
+| 기기 | Android 10 · 삼성인터넷 30 (Chrome/143 웹뷰) · RAM 8GB |
+| 접속 | LAN HTTPS 자체 서명 (`serve.mjs` :8443) · 탭 실행(standalone 아님) |
+| 방식 A | 1200×1600 228KB EXIF=false 85ms · **갤러리 없음** |
+| 방식 B | 3000×4000 3439KB EXIF=true · 이 기종은 갤러리도 없음 (기종 의존) |
+| 암호화 | 12ms / 복호 5ms / +93B · 왕복·변조·위조 모두 통과 |
 
-### 닫는 방법 (5분, 인증서 불필요)
+판정: **A안 유효.** B가 이 기종에서 안 남았어도 `<input capture>` 금지는 유지
+(다른 OEM은 DCIM에 먼저 저장함).
 
-`getUserMedia`는 보안 컨텍스트에서만 되는데 **`localhost`는 예외**입니다.
-크롬 포트 포워딩으로 폰이 PC 서버를 `localhost`로 보게 만듭니다.
+### P0-c 잔여 — 아이폰 보류 (기기 없음, 2026-08-17)
 
-1. 갤럭시: 개발자 옵션 → **무선 디버깅 켜기** (이미 켜져 있음)
-2. PC에서 정적 서버 실행
+실기가 없어서 C1(갤러리 미저장)은 닫지 못했다. **잊은 게 아니라 막힌 것**이다.
+문헌으로 코딩 제약은 적용했다. 사진 앱을 여는 확인은 검색이 대체하지 못한다.
+아이폰 Safari에서 A=있음이 나오면 설계 전제가 깨지므로, 배포 전에 반드시 한다.
 
-   ```bash
-   python -m http.server 8080 --directory spike/camera
-   ```
+### 문헌으로 적용한 iOS 26 / Safari 26 (2026-08 검색)
 
-3. PC 크롬 → `chrome://inspect/#devices` → **Port forwarding...**
-   → `8080` → `localhost:8080` 추가, 체크박스 켜기
-4. **갤럭시 크롬**에서 `http://localhost:8080` 접속
-5. 방식 A(getUserMedia)로 촬영 → **갤럭시 갤러리 앱**을 직접 열어 확인
-6. 리포트의 User-Agent에 `Android` 가 찍혔는지 반드시 확인할 것
+출처: WebKit Safari 26 릴리스, WebKit 버그, MDN, iOS PWA 카메라 이슈(STRICH/Scandit).
+**적용한 것** (실기 없이 넣어도 되는 제약)
 
-**통과 기준**: 갤러리·DCIM·최근 항목 어디에도 안 나타남
-**실패하면**: 설계 전제가 깨집니다. PWA로는 불가능하다는 뜻이므로 네이티브 재검토 필요
+| 사실 | PWA/스파이크에 넣을 것 |
+|---|---|
+| getUserMedia 프레임은 메모리뿐. Photos에 쓰는 Web API 없음 | 방식 A 유지. `<img src=blob>` · 다운로드 링크 금지 |
+| iOS 길게 누르기 = "이미지 저장" → 사진 앱 (유일한 웹 저장 경로) | 미리보기는 canvas만. `-webkit-touch-callout:none`, `pointer-events:none` |
+| `<input capture>` 는 iOS에선 Camera Roll에 안 남는다는 보고가 많음 (Android OEM과 반대) | 그래도 금지. EXIF·기종 의존 |
+| `playsinline`+`muted` 없으면 프리뷰 검은 화면 | video 속성 필수 |
+| 동시에 getUserMedia 1개만. 두 번째 호출이 첫 트랙을 죽임 | 재호출 전 `stop()` |
+| 홈화면 PWA는 권한을 페이지 로드·해시 변경마다 다시 물음 | SPA, 해시 라우팅으로 카메라 재요청 금지 |
+| 백그라운드 복귀 시 검은 화면 | `pagehide`/`visibilitychange` 에서 트랙 stop |
+| iOS Safari 메모리 압박 | 최대 5장, canvas 즉시 비우기, object URL 안 만듦 |
+| iOS 26부터 홈화면 추가는 기본이 웹앱 (manifest 없어도 standalone) | 설치 UX는 Safari 공유 → 홈 화면에 추가 |
+| iOS 26 UA의 OS 버전은 `18_6`으로 고정 | UA로 iOS 버전 파싱 금지. 기능 감지 |
+| 자체 서명은 Safari 15+에서 "계속"이 없거나 카메라가 안 열림 | CA 프로필 + 인증서 신뢰 설정 (이미 준비) |
+| ImageCapture.takePhoto 는 Safari 미지원. Safari 26은 `grabFrame`만 | 캡처는 canvas.drawImage 유지 |
+| 스크린샷·Share는 웹으로 불가 | 운영 규칙 |
+
+**검색이 못 닫는 것** — 아이폰에서 사진 앱·최근 삭제됨을 직접 열기. iCloud 사진, Lockdown Mode, 기종별 차이는 실기만 안다.
+
+준비는 되어 있다. 폰이 오는 즉시:
+
+1. 아이폰은 **Safari** (크롬 iOS 쓰지 말 것)
+2. `http://<PC LAN IP>:8081/ios.html`  (HTTP — 프로필 받기용)
+3. 구성 프로파일 설치 → **설정 → 일반 → 정보 → 인증서 신뢰 설정** → `SSW Camera Spike CA` 전체 신뢰
+4. `https://<PC LAN IP>:8443/` 방식 A → 사진 앱 직접 확인 → 리포트
+
+같은 폰 크롬·홈화면 추가·연속 5장은 아이폰 A 판정 뒤에.
+
+### 이 검증에서 얻은 접속 노하우
+
+갤럭시 주소창은 `localhost`/`127.0.0.1` 을 검색으로 보낸다.
+inspect에 폰이 보여도 `adb devices` 가 비어 있으면 포트 포워딩은 동작하지 않는다.
+Open tab을 주소 없이 누르면 `null에 접근할 수 없습니다`.
+ADB 없이 열려면 `node spike/camera/serve.mjs --port 8443` 후 메모/QR로
+`https://<PC LAN IP>:8443` — 자체 서명 경고는 **고급 → (안전하지 않음)으로 이동**.
 
 ---
 
@@ -191,7 +225,30 @@ node server/test-client.mjs --url http://localhost:8443
 ```
 
 ```bash
-node server/collector.mjs
+node server/collector.mjs --watch
+```
+
+PWA (다른 터미널):
+
+```
+cd app
+npm install
+npm run dev
+```
+
+```
+node server/keygen.mjs provision 김현장
+```
+
+나온 JSON을 앱 설정에 붙여넣거나, `keys/김현장.svg` QR을 스캔한다.
+`url` 이 비어 있거나 자리표시자면 `/api` 는 Vite가 `localhost:8443` 으로 넘긴다.
+
+```
+python server/scan.py --all
+```
+
+```
+node server/ops.mjs disk
 ```
 
 `server/keys/`, `server/inbox/` 는 `.gitignore` 로 커밋이 막혀 있습니다. **절대 커밋하지 마세요.**
@@ -200,14 +257,22 @@ node server/collector.mjs
 
 ## 7. 다음에 할 일
 
+아이폰 결과는 앱 설정 `iosVerdict` 로 둘 다 가정한다.
+
+- `assume-safe` (기본): 갤럭시·문헌과 같이 getUserMedia
+- `assume-leak`: 아이폰에서 카메라 차단. 웹에 두 번째 C1 촬영법은 없음. 메모·암호화·전송은 유지
+
+실측이 오면 이 스위치만 확정하면 된다. 실패 쪽을 따로 네이티브로 만드는 건 C3(연 $99)와 충돌하므로 별도 승인 전엔 만들지 않는다.
+
 | 단계 | 내용 | 선행 조건 |
 |---|---|---|
-| P0-c | 갤럭시 갤러리 검증 | 없음 — **언제든 가능, 최우선** |
-| P1 | 미니PC 구매 + Ubuntu 설치 | 하드웨어 |
-| P3 | PWA 본체 | P2 완료 |
-| P4 | 문서 보정 (Python+OpenCV) | P1 (미니PC) |
-| P5 | 대기함 UI, QR 등록 | P3 |
-| P6 | ERP 연결 + 운영 도구 | ERP 스펙 확정 |
+| P3 | PWA 본체 | **구현됨** `app/` |
+| P4 | 문서 보정 | **구현됨** `server/scan.py` (확신 없으면 skip) |
+| P5 | QR + 대기함 | **구현됨** (홈화면 설치 안내는 잔여) |
+| P6 운영 | disk / gc | **구현됨** `server/ops.mjs` |
+| P0-c 잔여 | 아이폰 Safari | 기기 없음 · 배포 전 필수 |
+| P1 | 미니PC Ubuntu | 하드웨어 |
+| P6 ERP | ERP DB 투입 | 스펙 확정 |
 
 ---
 

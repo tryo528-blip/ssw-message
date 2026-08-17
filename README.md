@@ -5,7 +5,7 @@ ERP와 직접 연결하지 않고, 정해진 공간에 정해진 양식으로 �
 
 | | |
 |---|---|
-| 상태 | 서버 v3 구현 완료 (검사 34/34) · **갤럭시 실기 검증 대기** |
+| 상태 | 서버 v3 · 갤럭시 통과 · PWA · 문서보정 · QR/대기함 · 아이폰·ERP·미니PC 잔여 |
 | 서버 | 리눅스 미니PC (Ubuntu Server + LUKS) |
 | 비용 | 서버 임대·스토어 등록비 0원 (미니PC 구매만 일회성) |
 | 지원 | iPhone · Android (PWA, 홈화면 추가) |
@@ -103,10 +103,22 @@ node server/test-client.mjs --url http://localhost:8443
 ```
 
 ```bash
-node server/collector.mjs
+node server/collector.mjs --watch
 ```
 
-`server/inbox/ready/` 에 복호화된 평문이 떨어지면 정상입니다.
+PWA:
+
+```
+cd app
+npm install
+npm run dev
+```
+
+```
+node server/keygen.mjs provision 홍길동
+```
+
+JSON을 앱 설정에 붙여넣으면 됩니다. `server/inbox/ready/` 에 복호화된 평문이 떨어지면 정상입니다.
 
 사무실에 실제로 설치하려면 [docs/SETUP.md](docs/SETUP.md) 를 따르세요.
 
@@ -121,8 +133,8 @@ node server/collector.mjs
 
 **암호화 (완료)** — 300KB 사진 기준 암호화 1ms, 전송량 증가 93바이트.
 
-**카메라 (대기)** — 아이폰·갤럭시 실기에서 "촬영 후 갤러리에 안 남는다"를 확인해야 합니다.
-**이 검증이 프로젝트 성패입니다.** 여기서 실패하면 설계 전제가 깨집니다.
+**카메라 (갤럭시 통과)** — 삼성인터넷 30 실기, 방식 A 갤러리 없음, EXIF 없음.
+아이폰 Safari · 홈화면 추가 상태는 아직입니다.
 
 ---
 

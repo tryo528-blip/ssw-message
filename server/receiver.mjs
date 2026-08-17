@@ -30,7 +30,10 @@ const DATA = join(HERE, argOf('data', '.'));
 const KEYS = join(DATA, 'keys');
 const ENC = join(DATA, 'inbox', 'enc');            // 암호문 보관소 (여기만 쓰기)
 const STATUS = join(DATA, 'inbox', 'status');      // collector 가 쓴 것을 읽기만
-const STATIC = join(HERE, argOf('static', '../spike/camera'));
+const defaultStatic = existsSync(join(HERE, '../app/dist/index.html'))
+  ? '../app/dist'
+  : '../spike/camera';
+const STATIC = join(HERE, argOf('static', defaultStatic));
 
 const MAX_BODY = 28 * 1024 * 1024;                 // 사진 총 25MiB + 봉투 여유
 const MAX_STATUS_BODY = 4 * 1024;
