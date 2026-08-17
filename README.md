@@ -5,7 +5,7 @@ ERP와 직접 연결하지 않고, 정해진 공간에 정해진 양식으로 �
 
 | | |
 |---|---|
-| 상태 | 규격 v3 확정 · 서버 프로토타입(v2) 동작 · **카메라 실기 검증 대기** |
+| 상태 | 서버 v3 구현 완료 (검사 34/34) · **갤럭시 실기 검증 대기** |
 | 서버 | 리눅스 미니PC (Ubuntu Server + LUKS) |
 | 비용 | 서버 임대·스토어 등록비 0원 (미니PC 구매만 일회성) |
 | 지원 | iPhone · Android (PWA, 홈화면 추가) |
@@ -68,7 +68,8 @@ ECDH(P-256) + HKDF-SHA256 + AES-256-GCM — 전부 브라우저 기본 API입니
 | [docs/CONTRACT.md](docs/CONTRACT.md) | 연동 규격 v3 (봉투·API·오류코드·폴더) | ERP 붙일 때 |
 | [docs/PIPELINE.md](docs/PIPELINE.md) | 검증/보정 2단계 처리, 문서 스캔 보정 | 사진 처리를 만들 때 |
 | [docs/TRANSPORT.md](docs/TRANSPORT.md) | 전송 경로를 왜 이렇게 골랐나 | 경로를 다시 검토할 때 |
-| [server/README.md](server/README.md) | 서버 프로토타입 사용법 | 서버를 만질 때 |
+| [server/README.md](server/README.md) | 서버 사용법 · 검증 결과 | 서버를 만질 때 |
+| [docs/HANDOFF.md](docs/HANDOFF.md) | 현재 진행 상황 · 이어받는 법 | **작업을 이어받을 때** |
 | [spike/camera/README.md](spike/camera/README.md) | 카메라 실기 검증 절차 | 폰에서 검증할 때 |
 
 ### 선행 프로젝트

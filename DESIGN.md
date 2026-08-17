@@ -12,8 +12,9 @@
 | 관련 문서 | [TRANSPORT.md](docs/TRANSPORT.md) · [CONTRACT.md](docs/CONTRACT.md) · [PIPELINE.md](docs/PIPELINE.md) · [SETUP.md](docs/SETUP.md) |
 | 선행 프로젝트 | [WorkCadenceTransfer](https://github.com/tryo528-blip/WorkCadenceTransfer) — 정규화 정책·오류 코드를 흡수 |
 
-> **코드와 규격의 현재 간극**: 서버 프로토타입은 CONTRACT **v2** 구현이고, 규격은 **v3** 입니다.
-> v3 동기화(식별자 분리·오류 코드·상태 조회·바이너리 전송)는 다음 구현 과제입니다.
+> **인수인계**: 작업이 끊겼을 때 이어받는 방법은 [docs/HANDOFF.md](docs/HANDOFF.md) 에 있습니다.
+> 서버 코드는 CONTRACT v3 구현이 완료됐습니다 (검사 34/34).
+> 남은 최대 리스크는 **P0-c 갤럭시 실기 검증**입니다.
 
 ---
 
@@ -294,10 +295,10 @@ ssw-message/
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | P0-a | 설계·연동 규격 v3 | ✅ 완료 |
-| P0-b | 수신 서버 + 복호화 + 검사 9종 (**v2 구현**) | ✅ 완료 (전부 통과) |
+| P0-b | 수신 서버 + 복호화 + 검사 9종 (v2) | ✅ 완료 |
 | **P0-c** | **카메라 갤러리 미저장 실기 검증** | 🔴 **대기 — 최대 리스크** |
+| P2 | 서버 v3 동기화 — 식별자 분리, 오류 코드, 상태 조회, 바이너리 전송 | ✅ **완료 (34/34)** |
 | P1 | 미니PC 구매 + 설치 (Ubuntu·LUKS·DDNS·Caddy·systemd) | 대기 |
-| P2 | **서버 v3 동기화** — 식별자 분리, 오류 코드, 상태 조회, 바이너리 전송 | 대기 |
 | P3 | PWA 본체 (메모 → 카메라 → 암호화 → 전송 → 확인 → 삭제) | 대기 |
 | P4 | 문서 보정 파이프라인 (Python + OpenCV) | 대기 |
 | P5 | 대기함 UI, QR 등록, 설정 | 대기 |
